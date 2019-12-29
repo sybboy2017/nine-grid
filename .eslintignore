@@ -1,0 +1,5 @@
+dist/**/*.*
+scripts/**/*.*
+server/**/*.*
+static/**/*.*
+node_modules/**/*.*

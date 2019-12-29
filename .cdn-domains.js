@@ -1,0 +1,1 @@
+module.exports = {"testCdnDomain":"test-g.momocdn.com/fep/momo/test-activity/mk-grid-demo","cdnDomain":"g.momocdn.com/fep/momo/test-activity/mk-grid-demo","bid":1000782}
