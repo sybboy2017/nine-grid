@@ -1,225 +1,160 @@
 <template>
   <div id="grid-box" ref="gridBox" 
   @touchmove.stop.prevent="onGridTouchMove($event)"
-  @touchend.stop.prevent="onGridTouchEnd2($event)">
-	<div class="grid-item" ref="gridItems" @touchstart.stop.prevent="onGridItemTouchStart2($event,n)"
-	:style="{ backgroundImage : 'url(' + require(`../assets/images/cute_shafa_0${n}.png`) + ')'}" draggable="true" :key="n" v-for="n in numbersArray" :data-index="n">
+  @touchend.stop.prevent="onGridTouchEnd($event)">
+	<div class="grid-item" ref="gridItems" @touchstart.stop.prevent="onGridItemTouchStart"
+	 draggable="true" :key="n" v-for="n in numbersArray" :data-item="n">
+	 {{n}}
 	</div>
   </div>
 </template>
 <script>
+import { _throttle } from '../lib/util'
 export default {
-  name: 'NineGridV3Component',
+  name: 'NineGridV2Component',
   data () {
     return {
       numbersArray:[1,2,3,4,5,6,7,8,9],
-	  startOffsetX:0,
-	  startOffsetY:0,
-	  fromIndex:0,
-	  toIndex:0,
-	  cloneGridItem: null
+	  // startOffsetX:0,
+	  // startOffsetY:0,
+	  startX:0,
+	  startY:0,
+	  fromValue:'',
+	  toValue:'',
+	  cloneGridItem: null,
+	  toCloneGridItem: null,
+	  maxBoxDistance:0,
+	  minBoxDistance:0,
     }
   },
-  computed: {
-	  
+  created(){
+	  console.log(`data init => ${this.numbersArray}`);
+  },
+  mounted(){
+	  const gridBox = document.getElementById('grid-box');
+	  this.minBoxDistance = gridBox.offsetTop;
+	  this.maxBoxDistance = gridBox.offsetHeight + gridBox.offsetTop; 
   },
   methods: {
-	  onGridTouchMove(e){
-		  if(this.cloneGridItem){
-			  const touch = e.changedTouches[0];
-			  this.cloneGridItem.style.top = Number(touch.pageY - this.startOffsetY) + 'px';
-			  this.cloneGridItem.style.left = Number(touch.pageX - this.startOffsetX) + 'px';
-		  }
-	  },
-	  onGridTouchEnd(e){
-		  console.log('end before')
-		  this.logRef();
-		  this.toIndex = this.getMinIndexForCloneItem();
-		   console.log(`fromIndex=>${this.fromIndex}`);
-		  console.log(`toIndex=>${this.toIndex}`);
-		  if(this.toIndex == this.fromIndex){
-			  const fromGridItem = this.getRefItemByDataIndex(this.fromIndex + 1);
-			  this.removeClass(fromGridItem,'moving');
-			  this.changeGridItemBgImage(fromGridItem,this.fromIndex);
-			  fromGridItem.setAttribute('data-index',this.fromIndex+1);
-              if(this.cloneGridItem){
-				 this.$refs.gridBox.removeChild(this.cloneGridItem);
-				 this.cloneGridItem = null; 
-			  }
-		  }else{
-			  const toGridItem = this.getRefItemByDataIndex(this.toIndex + 1);
-			  const toCloneGridItem = this.cloneGridItemNode(this.toIndex);
-			  const fromGridItem = this.getRefItemByDataIndex(this.fromIndex + 1);
-			  
-			  this.addClass(toGridItem,'moving');
-			  this.cloneGridItem.style.top = toGridItem.style.top;
-			  this.cloneGridItem.style.left = toGridItem.style.left;
-			  
-			  this.removeClass(toGridItem,'moving');
-			  this.changeGridItemBgImage(toGridItem,this.fromIndex);
-			  toGridItem.setAttribute('data-index',this.fromIndex+1);
-			  if(this.cloneGridItem){
-				 this.$refs.gridBox.removeChild(this.cloneGridItem);
-				 this.cloneGridItem = null; 
-			  }
-			  
-			 
-			  toCloneGridItem.style.top = fromGridItem.style.top;
-			  toCloneGridItem.style.left = fromGridItem.style.left;
-			  
-			  this.removeClass(fromGridItem,'moving');
-			  this.changeGridItemBgImage(fromGridItem,this.toIndex);
-			  fromGridItem.setAttribute('data-index',this.toIndex+1);
-			  if(toCloneGridItem){
-				 this.$refs.gridBox.removeChild(toCloneGridItem);
-			  }
-		  }
-		  console.log('end after')
-		  this.logRef();
-	  },
-	  onGridTouchEnd2(e){
-	  		  console.log('end before')
-	  		  this.logRef();
-	  		  this.toIndex = this.getMinIndexForCloneItem2();
-	  		  console.log(`fromIndex=>${this.fromIndex}`);
-	  		  console.log(`toIndex=>${this.toIndex}`);
-			  if(this.cloneGridItem){
-			  	  				 this.$refs.gridBox.removeChild(this.cloneGridItem);
-			  	  				 this.cloneGridItem = null; 
-			  	  			  }
-					const fromGridItem = this.$refs.gridItems[this.fromIndex];
-			  this.removeClass(fromGridItem,'moving');
-			  //this.changeGridItemBgImage(fromGridItem,this.fromIndex);
-
-			  this.changeArrayItem(this.fromIndex,this.toIndex);
-			  
-	  		  console.log('end after')
-	  		  this.logRef();
-	  },
 	  onGridItemTouchStart(e) {
-		  const idx = Number(e.target.getAttribute('data-index')) - 1;
-		  console.log(idx);
-		  this.fromIndex = idx; 
-		  
-		  /* start position for current grid item element */
-		  const touch = e.touches[0];
-		  console.log(`start pageX=>${touch.pageX}`);
-		  
-		  console.log('start before')
-		  this.logRef();
-		  const gridItem = this.getRefItemByDataIndex(idx + 1);
-		  console.log(`idx=>${idx}`);
-		  this.startOffsetX = Number(touch.pageX - gridItem.offsetLeft);
-		  this.startOffsetY = Number(touch.pageY - gridItem.offsetTop);
-		  console.log(`start pageY=>${touch.pageY}`);
-
-		  /* clone node */
-		  this.cloneGridItem = this.cloneGridItemNode(idx);
-		  
-		  /* set origin node style */
-		  const originGridItem = this.getRefItemByDataIndex(idx + 1);
-		  console.log(`originitem=>${originGridItem}`);
-
-		  this.addClass(originGridItem,'moving');
-		  this.changeGridItemBgImage(originGridItem,-1);
-		  console.log('start after')
-		  this.logRef();
-	  },
-	  onGridItemTouchStart2(e, index) {
-	  		  const idx = index - 1;
-	  		  console.log(idx);
-	  		  this.fromIndex = idx; 
+	  		  const value = Number(e.target.getAttribute('data-item'));
+	  		  this.fromValue = value; 
 	  		  
 	  		  /* start position for current grid item element */
 	  		  const touch = e.touches[0];
-	  		  console.log(`start pageX=>${touch.pageX}`);
-	  		  
-	  		  console.log('start before')
-	  		  this.logRef();
-	  		  const gridItem = this.$refs.gridItems[idx];
-	  		  console.log(`idx=>${idx}`);
-	  		  this.startOffsetX = Number(touch.pageX - gridItem.offsetLeft);
-	  		  this.startOffsetY = Number(touch.pageY - gridItem.offsetTop);
-	  		  console.log(`start pageY=>${touch.pageY}`);
+	  		  const gridItem = this.getRefItemByDataItem(value);
+	  		  // this.startOffsetX = Number(touch.pageX - gridItem.offsetLeft);
+	  		  // this.startOffsetY = Number(touch.pageY - gridItem.offsetTop);
+			  this.startX = touch.pageX;
+			  this.startY = touch.pageY;
 	  
 	  		  /* clone node */
-	  		  this.cloneGridItem = this.cloneGridItemNode2(idx);
+	  		  this.cloneGridItem = this.cloneGridItemNode(value);
 	  		  
 	  		  /* set origin node style */
-	  		  const originGridItem = this.$refs.gridItems[idx];
-	  		  console.log(`originitem=>${originGridItem}`);
-	          this.addClass(originGridItem,'moving');
-	          //this.changeGridItemBgImage(originGridItem,-1);
-			  
-	  		  console.log('start after')
-	  		  this.logRef();
+	  		  const originGridItem = this.getRefItemByDataItem(value);
+	  		  this.addClass(originGridItem,'moving');
+	  		  this.changeGridItemNumber(originGridItem,'');
 	  },
-	  cloneGridItemNode(idx) {
-		  console.log('clone before')
-		  this.logRef();
-		  const gridItem = this.getRefItemByDataIndex(idx + 1);
-		  console.log(`clone node=>${gridItem}`);
+	  onGridTouchMove: _throttle('touchMoveHander',350),
+	  // onGridTouchMove: function(e){
+		 //  this.touchMoveHander(e)
+	  // },
+	  touchMoveHander(e) {
+		  if(!this.fromValue) return;
+		  const touch = e.changedTouches[0];
+		  const moveDisX = Number(touch.pageX - this.startX);
+		  const moveDisY = Number(touch.pageY - this.startY);
+		  if(this.cloneGridItem){
+		  		// this.cloneGridItem.style.top = Number(touch.pageY - this.startOffsetY) + 'px';
+		  		// this.cloneGridItem.style.left = Number(touch.pageX - this.startOffsetX) + 'px';
+				this.transformGridItem(this.cloneGridItem,moveDisX,moveDisY);
+		  }
+		  this.toValue = this.getMinItemForCloneItem(moveDisX, moveDisY);
+		  // console.log(`fromValue=>${this.fromValue}`);
+		  // console.log(`toValue=>${this.toValue}`);
+		  if(this.toValue != this.fromValue && touch.pageY > this.minBoxDistance 
+		      && touch.pageY < this.maxBoxDistance){
+			  const toGridItem = this.getRefItemByDataItem(this.toValue);
+			  if(!this.toCloneGridItem){
+				  this.toCloneGridItem = this.cloneGridItemNode(this.toValue);
+			  }
+			  const fromGridItem = this.getRefItemByDataItem(this.fromValue);
+			  
+			  //remove class moving
+			  this.$refs.gridItems.forEach(item => {
+				  const itemValue = Number(item.getAttribute('data-item'));
+				  this.removeClass(item,'moving');
+				  if(this.toValue == itemValue && !item.classList.contains('draging')){
+					  this.addClass(toGridItem,'moving');
+					  this.changeGridItemNumber(toGridItem, '');
+				  } 
+			  });
+			  if(this.cloneGridItem){
+				  this.resetGridItem(toGridItem,this.fromValue,this.cloneGridItem);
+			  }
+			  this.resetGridItem(fromGridItem,this.toValue,this.toCloneGridItem);
+			  this.clearCloneNode(this.toCloneGridItem);
+		  } 
+	  },
+	  onGridTouchEnd(e){
+		  this.clearCloneNode(this.cloneGridItem);
+		  
+		  const fromGridItem = this.getRefItemByDataItem(this.fromValue);
+		  this.removeClass(fromGridItem,'moving');
+		  this.changeGridItemNumber(fromGridItem,this.fromValue);
+		  if(this.toValue){
+			  const toGridItem = this.getRefItemByDataItem(this.toValue);
+			  this.removeClass(toGridItem, 'moving');
+			  //this.changeGridItemNumber(toGridItem,this.fromValue);
+		  }
+		 
+		  const touch = e.changedTouches[0];
+		  if(!this.toValue || this.toValue == this.fromValue || touch.pageY < this.minBoxDistance 
+		      || touch.pageY > this.maxBoxDistance){
+			  this.resetOriginGridItem();
+			  this.fromValue = '';
+			  this.toValue = '';
+			  return;
+		  }
+		  this.changeArrayItem(this.fromValue,this.toValue);
+		  console.log(`data changed =>${this.numbersArray}`);
+	  },
+	  cloneGridItemNode(value) {
+		  const gridItem = this.getRefItemByDataItem(value);
 		  const cloneGridItem = gridItem.cloneNode(true);
-		  cloneGridItem.style.top = gridItem.style.top;
-		  cloneGridItem.style.left = gridItem.style.left;
-		  cloneGridItem.removeAttribute('data-index');
+		  cloneGridItem.style.top = gridItem.offsetTop + 'px';
+		  cloneGridItem.style.left = gridItem.offsetLeft + 'px';
+		  cloneGridItem.removeAttribute('data-item');
 		  this.addClass(cloneGridItem,'draging');
 		  this.$refs.gridBox.append(cloneGridItem);
-		  console.log('clone after')
-		  this.logRef();
 		  return cloneGridItem;
 	  },
-	  cloneGridItemNode2(idx) {
-	  		  console.log('clone before')
-	  		  this.logRef();
-	  		  const gridItem = this.$refs.gridItems[idx];
-	  		  console.log(`clone node=>${gridItem}`);
-	  		  const cloneGridItem = gridItem.cloneNode(true);
-	  		  cloneGridItem.style.top = gridItem.style.top;
-	  		  cloneGridItem.style.left = gridItem.style.left;
-	  		  this.addClass(cloneGridItem,'draging');
-	  		  this.$refs.gridBox.append(cloneGridItem);
-	  		  console.log('clone after')
-	  		  this.logRef();
-	  		  return cloneGridItem;
-	  },
-	  getMinIndexForCloneItem(){
-		  let minIndex = this.fromIndex;
-		  let minValue = 1000;//min value for sort
+	  getMinItemForCloneItem(moveDisX, moveDisY){
+		  let minValue = this.fromValue;
+		  let minDistance = 1000;//min value for sort
 		  for(let i = 0; i < this.$refs.gridItems.length; i++){
 			  const currentItem = this.$refs.gridItems[i];
 			  //get min disance item for moving item
-			  const leftVal = Number(this.cloneGridItem.offsetLeft - currentItem.offsetLeft);
-			  const topVal = Number(this.cloneGridItem.offsetTop - currentItem.offsetTop);
+			  const leftVal = Number(this.cloneGridItem.offsetLeft + moveDisX - currentItem.offsetLeft);
+			  const topVal = Number(this.cloneGridItem.offsetTop + moveDisY - currentItem.offsetTop);
 			  let smallDistance = Math.sqrt(Math.pow(leftVal, 2) + Math.pow(topVal, 2));
-			  if (smallDistance < minValue) { 
-				  minValue = smallDistance; 
-				  minIndex = Number(currentItem.getAttribute('data-index')-1); 
+			  if (smallDistance <  minDistance) { 
+				  minDistance = smallDistance; 
+				  minValue =  Number(currentItem.getAttribute('data-item'));
 			  }
 		  }
-		  return minIndex;
+		  return minValue;
 	  },
-	  getMinIndexForCloneItem2(){
-	  		  let minIndex = this.fromIndex;
-	  		  let minValue = 1000;//min value for sort
-	  		  for(let i = 0; i < this.$refs.gridItems.length; i++){
-	  			  const currentItem = this.$refs.gridItems[i];
-	  			  //get min disance item for moving item
-	  			  const leftVal = Number(this.cloneGridItem.offsetLeft - currentItem.offsetLeft);
-	  			  const topVal = Number(this.cloneGridItem.offsetTop - currentItem.offsetTop);
-	  			  let smallDistance = Math.sqrt(Math.pow(leftVal, 2) + Math.pow(topVal, 2));
-	  			  if (smallDistance < minValue) { 
-	  				  minValue = smallDistance; 
-	  				  minIndex = i; 
-	  			  }
-	  		  }
-	  		  return minIndex;
-	  },
-	  changeArrayItem(fromIdx, toIdx) {
-		 const fromVal = this.numbersArray[fromIdx - 1];
-		 const toVal = this.numbersArray[toIdx - 1];
-		 this.$set(this.numbersArray,fromIdx - 1,toVal);
-		 this.$set(this.numbersArray,toIdx - 1,fromVal);
+	  changeArrayItem(fromVal, toVal) {
+		 const fromIdx = this.numbersArray.indexOf(fromVal);
+		 const toIdx = this.numbersArray.indexOf(toVal);
+		 //only update data,so not $set
+		 this.numbersArray[fromIdx] = toVal;
+		 this.numbersArray[toIdx] = fromVal;
+		 
+		 this.fromValue = '';
+		 this.toValue = '';
 	  },
 	  addClass(gridItem, className) {
 		  if(!gridItem.classList.contains(className)){
@@ -231,20 +166,39 @@ export default {
 		  	gridItem.classList.remove(className)
 		  }
 	  },
-	  changeGridItemBgImage(gridItem, idx){
-		  debugger
-		  console.log(`changeimg=>${idx}`);
-		  const path = (idx > -1 && require('../assets/images/cute_shafa_0' + (idx + 1) + '.png'));
-		  gridItem.style.backgroundImage = path ?'url(' + path + ')':'none';
+	  changeGridItemNumber(gridItem, value = ''){
+	  	  gridItem.innerHTML = value;
 	  },
-	  getRefItemByDataIndex(index){
-		  console.log(index);
-		  console.log(this.$refs.gridItems);
-		  return this.$refs.gridItems.filter(item => { return item.getAttribute('data-index') == index})[0];
+	  getRefItemByDataItem(value){
+		  return this.$refs.gridItems.filter(item => { return item.getAttribute('data-item') == value})[0];
 	  },
-	  logRef(){
-		  this.$refs.gridItems.forEach(item => console.log(item.outerHTML))
-	  }
+	  resetOriginGridItem(){
+		  const fromGridItem = this.getRefItemByDataItem(this.fromValue);
+		  this.resetGridItem(fromGridItem,this.fromValue,this.cloneGridItem);
+		  this.removeClass(fromGridItem,'moving');
+	  },
+	  resetGridItem(gridItem, value, cloneGridItem){
+		  // cloneGridItem.style.top = gridItem.style.top;
+		  // cloneGridItem.style.left = gridItem.style.left;
+		  const moveDisX = Number(gridItem.offsetLeft - cloneGridItem.offsetLeft);
+		  const moveDisY = Number(gridItem.offsetTop - cloneGridItem.offsetTop);
+		  this.transformGridItem(cloneGridItem,moveDisX,moveDisY);
+		  cloneGridItem.style.zIndex = 2;
+		  if(!gridItem.classList.contains('moving')){
+			  this.changeGridItemNumber(gridItem,value);
+		  }
+		  gridItem.setAttribute('data-item',value);
+	  },
+	  clearCloneNode(cloneGridItem){
+		  if(cloneGridItem && this.$refs.gridBox.contains(cloneGridItem)){
+		  	this.$refs.gridBox.removeChild(cloneGridItem);
+		  	cloneGridItem = null; 
+		  }
+	  },
+	  transformGridItem(gridItem,x,y){
+		  gridItem.style.webkitTransform = 'translate(' + x + 'px,' + y + 'px)';
+		  gridItem.style.transition = 'transform .3s ease-in-out';
+	  },
   }
 }
 </script>
@@ -261,6 +215,7 @@ export default {
     div.grid-item {
         width: 32%;
         height: 241.82px;
+		line-height:241.82px;
         border-radius: 10px;
         float: left;
 		margin:.1rem;
@@ -270,6 +225,8 @@ export default {
         border: 1px solid #ccc;
         z-index: 1;
         cursor: move;
+		text-align:center;
+		font-size:4rem;
     }
 	div.moving {
 	    border: 1px dashed gray;
@@ -281,6 +238,6 @@ export default {
 	
 	div.draging {
 	    position: absolute;
-	    z-index: 2;
+	    z-index: 3;
 	}
 </style>
